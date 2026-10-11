@@ -135,33 +135,14 @@ class ChineseOllamaAdapter extends LlmAdapter {
   }
 
   async *stream(options: StreamOptions): AsyncGenerator<Record<string, unknown>> {
-    // 找出真正的使用者請求：
-    // DSH agent loop 可能會在 messages 裡混入系統內容（skill 描述、tool 定義等），
-    // 我們要過濾掉這些，找到使用者親自輸入的那一條。
-    const SYSTEM_HINTS = [
-      'diagnose-windows', 'office-docx', 'office-pptx', 'office-xlsx',
-      '你是一個', '你是 DSH', 'system prompt', 'skill', '技能',
-      'tool', 'function call', '你提供的信息', '可复用的任務指令集',
-    ];
+    // 取最後一條 user 訊息（v1.2.1 已驗證可行）
     let userText = '';
-    for (const m of options.messages) {
+    for (let i = options.messages.length - 1; i >= 0; i--) {
+      const m = options.messages[i]!;
       if (m.role !== 'user') continue;
-      let text = '';
-      if (typeof m.content === 'string') text = m.content;
-      else if (Array.isArray(m.content)) text = m.content.map((b) => b.text ?? '').join('\n').trim();
-      if (!text) continue;
-      const lower = text.toLowerCase();
-      if (SYSTEM_HINTS.some((h) => lower.includes(h.toLowerCase()))) continue;
-      userText = text;
-      break;
-    }
-    if (!userText) {
-      // fallback：實在找不到就拿最後一條 user
-      for (let i = options.messages.length - 1; i >= 0; i--) {
-        const m = options.messages[i]!;
-        if (m.role !== 'user') continue;
-        userText = typeof m.content === 'string' ? m.content :
-          m.content.map((b) => b.text ?? '').join('\n').trim();
+      if (typeof m.content === 'string') { userText = m.content; break; }
+      if (Array.isArray(m.content)) {
+        userText = m.content.map((b) => b.text ?? '').join('\n').trim();
         break;
       }
     }
