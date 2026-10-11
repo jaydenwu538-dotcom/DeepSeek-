@@ -1,7 +1,7 @@
 {
   "name": "dsh-plugin-model-router",
-  "version": "1.1.1",
-  "description": "DSH plugin: local Ollama adapter that forces Chinese responses.",
+  "version": "1.2.0",
+  "description": "DSH plugin: local Ollama adapter with Chinese responses and serial qwen->deepseek-coder code pipeline.",
   "type": "module",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
