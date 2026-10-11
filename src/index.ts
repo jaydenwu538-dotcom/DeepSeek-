@@ -170,7 +170,7 @@ class ChineseOllamaAdapter extends LlmAdapter {
       // DSH 新對話第一輪會把系統提示（skill 定義）當成 user 訊息送進來。
       // 偵測到就直接回「了解」，不呼叫模型，等真正的使用者問題。
       const isSystemWarmup =
-        /diagnose-windows|office-docx|office-pptx|office-xlsx|<skill_content>|可复用的任務指令集|你是 DSH|skill 工具/i
+        /diagnose-windows|office-docx|office-pptx|office-xlsx|sandbox-acl|<skill_content>|LibreOffice|可复用的任务指令集|可复用的任務指令集|你是 DSH|skill 工具|沙盒访问|工作空间写入|pandas 分析|幻灯片文本|信函和格式化/i
           .test(userText);
       if (isSystemWarmup) {
         output = '了解。請輸入您的需求。';
