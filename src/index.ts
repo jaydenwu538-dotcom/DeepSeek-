@@ -84,6 +84,24 @@ async function ollamaGenerate(
   return (data.response ?? '').trim();
 }
 
+/** 列出本機已安裝的 Ollama 模型名稱。 */
+async function listInstalledModels(host: string): Promise<string[]> {
+  try {
+    const res = await fetch(`${host}/api/tags`);
+    if (!res.ok) return [];
+    const data = (await res.json()) as { models?: Array<{ name?: string }> };
+    return (data.models ?? []).map((m) => m.name ?? '');
+  } catch {
+    return [];
+  }
+}
+
+/** 檢查某個模型是否已安裝（用前綴比對，容忍量化後綴差異）。 */
+function modelInstalled(installed: string[], model: string): boolean {
+  const base = model.split(':')[0] ?? model;
+  return installed.some((n) => n === model || n.startsWith(base + ':'));
+}
+
 /** 强制卸载指定模型（发空请求 + keep_alive:0，再轮询 /api/ps 确认）。 */
 async function forceUnload(host: string, model: string, timeoutMs = 10000): Promise<void> {
   await fetch(`${host}/api/generate`, {
@@ -199,7 +217,30 @@ class ChineseOllamaAdapter extends LlmAdapter {
         );
       }
     } catch (e) {
-      output = `[插件错误] ${e instanceof Error ? e.message : String(e)}`;
+      const msg = e instanceof Error ? e.message : String(e);
+      if (msg.includes('not found') || msg.includes('try pulling')) {
+        const missing = msg.includes(this.coderModel.split(':')[0] ?? '') ? this.coderModel : this.chatModel;
+        output = [
+          `⚠️ 缺少本機模型：${missing}`,
+          '',
+          '請打開終端機執行以下指令下載：',
+          `\`\`\`bash`,
+          `ollama pull ${missing}`,
+          `\`\`\``,
+          '',
+          '下載完成後重新發送訊息即可。',
+        ].join('\n');
+      } else if (msg.includes('Failed to fetch') || msg.includes('ECONNREFUSED')) {
+        output = [
+          '⚠️ 無法連接 Ollama。',
+          '',
+          '請確認 Ollama 已啟動：',
+          '1. 打開 Ollama 桌面版或在終端執行 `ollama serve`',
+          `2. 確認位址：${this.host}`,
+        ].join('\n');
+      } else {
+        output = `[插件错误] ${msg}`;
+      }
     }
 
     yield { type: 'text-delta', index: 0, text: output };
@@ -226,6 +267,19 @@ export class ChineseRouterService extends Service {
     console.log(
       `[chinese-router] 已注册 ollama-local。聊天=${config.chatModel}，代码=${config.coderModel}。`,
     );
+    // 啟動時偵測本機模型
+    listInstalledModels(config.ollamaHost).then((installed) => {
+      const chatOk = installed.some((n) => n === config.chatModel || n.startsWith(config.chatModel.split(':')[0] + ':'));
+      const coderOk = installed.some((n) => n === config.coderModel || n.startsWith(config.coderModel.split(':')[0] + ':'));
+      console.log(`[chinese-router] 本機已安裝模型: ${installed.join(', ') || '(無 / Ollama 未啟動)'}`);
+      console.log(`[chinese-router] 對話模型 ${config.chatModel}: ${chatOk ? '✅ 已就緒' : '❌ 缺失'}`);
+      console.log(`[chinese-router] 代碼模型 ${config.coderModel}: ${coderOk ? '✅ 已就緒' : '❌ 缺失'}`);
+      if (!chatOk || !coderOk) {
+        console.log('[chinese-router] 下載指令:');
+        if (!chatOk) console.log(`  ollama pull ${config.chatModel}`);
+        if (!coderOk) console.log(`  ollama pull ${config.coderModel}`);
+      }
+    });
   }
 }
 
