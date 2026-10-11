@@ -37,8 +37,10 @@ class ChineseOllamaAdapter extends LlmAdapter {
     return { id: provider, name: 'Local Ollama (中文回答)' };
   }
 
-  override listModels(_provider: string) {
-    return Promise.resolve([{ id: this.model, name: this.model + ' (中文)' }]);
+  override listModels(provider: string) {
+    return Promise.resolve([
+      { provider, id: this.model, name: this.model + ' (中文)' },
+    ]);
   }
 
   override async resolveModel(provider: string, model: string, _signal?: unknown) {
