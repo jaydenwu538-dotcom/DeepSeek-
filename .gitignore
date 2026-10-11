@@ -1,0 +1,8 @@
+node_modules/
+dist/
+_local-stub/
+tsconfig.check.json
+tsconfig.build.json
+*.tgz
+*.log
+.DS_Store

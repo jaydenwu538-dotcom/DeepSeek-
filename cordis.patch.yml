@@ -1,0 +1,8 @@
+# Self-installing bundle row.
+# Installing this package inserts one `model-router` layer into the Cordis
+# service tree automatically — no hand-edited cordis.yml, no companion packages.
+# `name` is the npm package name Cordis will load; `id` is the service id.
+- insert:
+    - id: model-router
+      name: 'dsh-plugin-model-router'
+      config: {}
