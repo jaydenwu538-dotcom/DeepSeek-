@@ -45,6 +45,18 @@ const ARCHITECT_SYSTEM =
 const CODER_SYSTEM =
   '你是一名资深 Python 工程师。严格按照实现指令写出完整、可直接运行的代码。只输出一个 fenced ```python 代码块，不要额外解释。包含 import、函数定义、必要的 main 示例。';
 
+/** 把 coder 模型输出整理成规范的 ```python 围栏代码块。 */
+function normalizeCodeBlock(raw: string): string {
+  let text = raw.trim();
+  // 已经有围栏就直接用
+  if (text.startsWith('```')) return text;
+  // 去掉开头孤零零的 "python" 语言标签
+  text = text.replace(/^python\s*\n/, '').trim();
+  // 修复被压成一行的缩进：冒号后 4+ 空格 + 关键字 → 换行
+  text = text.replace(/:\s{4,}(?=(if|else|elif|for|while|try|except|with|return|def|class)\b)/g, ':\n    ');
+  return '```python\n' + text + '\n```';
+}
+
 /** 调 Ollama /api/generate，非流式。 */
 async function ollamaGenerate(
   host: string,
@@ -175,7 +187,7 @@ class ChineseOllamaAdapter extends LlmAdapter {
           spec,
           '',
           '【最终代码（' + this.coderModel + '）】',
-          code,
+          normalizeCodeBlock(code),
         ].join('\n');
       } else {
         // 日常聊天：直接 qwen 回答
