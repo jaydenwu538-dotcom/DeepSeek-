@@ -1,7 +1,7 @@
 {
   "name": "dsh-plugin-model-router",
-  "version": "1.0.1",
-  "description": "DSH (DeepSeek Harness) plugin: routes chat to qwen2.5:7b, and for code tasks runs a strict serial qwen2.5:7b -> deepseek-coder:6.7b pipeline with forced Ollama memory unload between steps.",
+  "version": "1.1.0",
+  "description": "DSH plugin: local Ollama adapter that forces Chinese responses.",
   "type": "module",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
