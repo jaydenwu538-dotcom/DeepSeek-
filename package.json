@@ -1,6 +1,6 @@
 {
   "name": "dsh-plugin-model-router",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "DSH (DeepSeek Harness) plugin: routes chat to qwen2.5:7b, and for code tasks runs a strict serial qwen2.5:7b -> deepseek-coder:6.7b pipeline with forced Ollama memory unload between steps.",
   "type": "module",
   "main": "lib/index.js",
@@ -27,14 +27,14 @@
     }
   },
   "peerDependencies": {
-    "@deepseek-ai/cordis": "^4.0.2",
-    "@deepseek-ai/dsh-llm": "0.1.5-rc.2",
-    "@deepseek-ai/schemastery": "^3.18.1"
+    "@deepseek-ai/cordis": "4.0.4",
+    "@deepseek-ai/dsh-llm": "0.2.0-rc.2",
+    "@deepseek-ai/schemastery": "3.18.4"
   },
   "devDependencies": {
-    "@deepseek-ai/cordis": "^4.0.2",
-    "@deepseek-ai/dsh-llm": "0.1.5-rc.2",
-    "@deepseek-ai/schemastery": "^3.18.1",
+    "@deepseek-ai/cordis": "4.0.4",
+    "@deepseek-ai/dsh-llm": "0.2.0-rc.2",
+    "@deepseek-ai/schemastery": "3.18.4",
     "@types/node": "^20.14.0",
     "typescript": "^5.5.4"
   }
