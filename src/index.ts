@@ -102,8 +102,8 @@ function modelInstalled(installed: string[], model: string): boolean {
   return installed.some((n) => n === model || n.startsWith(base + ':'));
 }
 
-/** 强制卸载指定模型（发空请求 + keep_alive:0，再轮询 /api/ps 确认）。 */
-async function forceUnload(host: string, model: string, timeoutMs = 10000): Promise<void> {
+/** 强制卸载指定模型（发空请求 + keep_alive:0，再轮询 /api/ps 确认）。超时则拋錯，中止后续流程。 */
+async function forceUnload(host: string, model: string, timeoutMs = 15000): Promise<void> {
   await fetch(`${host}/api/generate`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -123,6 +123,7 @@ async function forceUnload(host: string, model: string, timeoutMs = 10000): Prom
     }
     await new Promise((r) => setTimeout(r, 400));
   }
+  throw new Error(`模型 ${model} 在 ${timeoutMs / 1000} 秒內未能卸載，為避免記憶體衝突已中止。請等待 5 秒後重試。`);
 }
 
 class ChineseOllamaAdapter extends LlmAdapter {
