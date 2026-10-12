@@ -156,7 +156,7 @@ class ChineseOllamaAdapter extends LlmAdapter {
     // DSH 新對話會把系統提示（skill 定義）混在 user 訊息裡。
     // 從後往前找，跳過看起來像系統提示的訊息，取真正的使用者輸入。
     const WARMUP_RE =
-      /diagnose-windows|office-docx|office-pptx|office-xlsx|sandbox-acl|<skill_content>|LibreOffice|可复用的任务指令集|可复用的任務指令集|你是 DSH|skill 工具|沙盒访问|工作空间写入|pandas 分析|幻灯片文本|信函和格式化/i;
+      /diagnose-windows|office-docx|office-pptx|office-xlsx|sandbox-acl|<skill_content>|<system-reminder>|LibreOffice|可复用的任务指令集|可复用的任務指令集|你是 DSH|skill 工具|沙盒访问|工作空间写入|pandas 分析|幻灯片文本|信函和格式化|Current runtime context|snapshot supersedes|workspace-write|Approval policy|DSH file policy|runtime-context|skill-catalog|available_skills/i;
 
     let userText = '';
     let allWarmup = true;
