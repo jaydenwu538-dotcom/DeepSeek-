@@ -167,11 +167,14 @@ class ChineseOllamaAdapter extends LlmAdapter {
       if (typeof m.content === 'string') text = m.content;
       else if (Array.isArray(m.content)) text = m.content.map((b) => b.text ?? '').join('\n').trim();
       if (!text) continue;
+      // DEBUG：印出每條 user 訊息前 200 字元，方便除錯
+      console.log(`[chinese-router] msg[${i}] role=${m.role} len=${text.length} preview=${JSON.stringify(text.slice(0, 200))}`);
       if (WARMUP_RE.test(text)) continue; // 跳過系統提示
       userText = text;
       allWarmup = false;
       break;
     }
+    console.log(`[chinese-router] 最終 userText=${JSON.stringify(userText.slice(0, 300))} allWarmup=${allWarmup}`);
 
     let output: string;
     try {
