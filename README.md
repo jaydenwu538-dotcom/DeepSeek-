@@ -33,7 +33,7 @@
 在 DSH 的「添加插件」視窗裡，貼上這個 GitHub 倉庫網址：
 
 ```
-https://github.com/jaydenwu538-dotcom/DeepSeek-
+https://github.com/jaydenwu538-dotcom/dsh-ollama-cn
 ```
 
 安裝完**完全結束 DSH 再重開**。
