@@ -1,74 +1,97 @@
-# dsh-plugin-model-router
+# Local Ollama 中文插件（DSH）
 
-DeepSeek Harness (DSH / Cordis) 插件：根据用户输入智能路由本地 Ollama 模型，
-代码任务走严格的串行双模型流程，全程强制卸载已用模型以保护 16GB 内存。
+給 DeepSeek Harness 桌面版用的插件。裝完後，DSH 可以直接呼叫你本機 Ollama 裡的模型，而且**強制中文回答**。寫程式時還會自動走「千問出指令 → DeepSeek Coder 寫代碼」的兩段流程。
 
-## 工作流
+---
 
-```
-session/event (user 消息)
-   │
-   ├─ 命中代码关键词（写代码/Python/Minecraft机器人/函数/debug…）
-   │     ├─ ① qwen2.5:7b          → 输出"详细实现指令"
-   │     ├─ ② ensureUnloaded(qwen2.5:7b)  ← 轮询 /api/ps 确认已卸载
-   │     ├─ ③ deepseek-coder:6.7b  → 写出最终 Python 代码
-   │     └─ ④ ensureUnloaded(deepseek-coder:6.7b)
-   │
-   └─ 日常聊天 → qwen2.5:7b 直接回答
-```
+## 它能做什麼
 
-## 插件身份证（dsh.bundle）
+| 你問的問題 | 插件怎麼處理 |
+|---|---|
+| 「今天天氣怎樣」「解釋一下什麼是閾值」 | 直接用 qwen2.5:7b 中文回答 |
+| 「寫一個 Python 函數算斐波那契」 | ① qwen2.5:7b 先出中文實現指令 → 卸載 → ② deepseek-coder:6.7b 寫代碼 → 卸載 |
+| 「幫我寫個 Minecraft 機器人」 | 同上，走雙模型流程 |
 
-`package.json` 里：
+**記憶體保護**：兩個模型永遠不會同時駐留記憶體。每次切換都強制卸載上一個，超過 15 秒還沒卸乾淨就中止這次請求，避免 16GB 機器 OOM。
 
-```jsonc
-"dsh": { "bundle": { "patch": "./cordis.patch.yml" } }
-```
+---
 
-`cordis.patch.yml` 自安装一行 `model-router` 服务层，装完即激活，无需手编 yml。
+## 前置需求
 
-## 安装
-
-1. 拉模型：
-   ```
-   ollama pull qwen2.5:7b
+1. 電腦上有 [Ollama](https://ollama.com) 在跑（預設 `http://localhost:11434`）
+2. 已經拉好這兩個模型：
+   ```bash
+   ollama pull qwen2.5:7b-instruct-q4_K_M
    ollama pull deepseek-coder:6.7b
    ```
-2. 本地构建（本仓库已预构建 `lib/`）：
-   ```
-   npm install
-   npm run build
-   ```
-3. 在 DSH「添加插件」对话框输入本目录的绝对路径：
-   ```
-   C:\Users\Jayden Wu\Doubao\chats\2026-10-11\new-chat\deepseek-harness-router
-   ```
-   安装源保持「npm 官方源」。或用 CLI：
-   ```
-   npx @deepseek-ai/dsh plugin --profile web add <本目录或 tgz 路径>
-   ```
+3. DSH 桌面版 0.2.0-rc.2 或以上
 
-## 配置
+---
 
-在 `cordis.patch.yml` 的 `config:` 块里可覆盖：
+## 安裝
 
-| 字段 | 默认值 | 说明 |
+在 DSH 的「添加插件」視窗裡，貼上這個 GitHub 倉庫網址：
+
+```
+https://github.com/jaydenwu538-dotcom/DeepSeek-
+```
+
+安裝完**完全結束 DSH 再重開**。
+
+---
+
+## 使用
+
+1. 開新對話
+2. 點對話框下方的模型選擇器
+3. 選 **`Local Ollama (中文回答)`** 底下的 `qwen2.5:7b-instruct-q4_K_M (中文對話)`
+4. 直接打問題就好
+
+---
+
+## 你會看到什麼
+
+**日常聊天**：qwen 直接回中文。
+
+**寫程式**：回覆會分兩段——
+
+```
+【架構師指令（qwen2.5:7b-instruct-q4_K_M）】
+函數名：fibonacci
+輸入參數：n (int)
+實現邏輯：...
+
+【最終代碼（deepseek-coder:6.7b）】
+```python
+def fibonacci(n):
+    ...
+```
+```
+
+---
+
+## 常見問題
+
+**Q：第一次發訊息回了「了解」或在講 skill 列表？**
+A：那是 DSH 啟動時注入的系統提示，插件會自動略過。再發一次就好。
+
+**Q：顯示「缺少本機模型」？**
+A：照對話框裡的指令跑 `ollama pull <模型名>` 即可。
+
+**Q：顯示「無法連接 Ollama」？**
+A：確認 Ollama 有在跑（工作列有小燈，或終端機 `ollama serve`）。
+
+**Q：寫程式時 15 秒還沒好？**
+A：第一次載入模型會慢。如果顯示「記憶體釋放中，請重試」，等 5 秒再發一次。
+
+---
+
+## 進階設定（可選）
+
+在 DSH 的插件設定裡可以改：
+
+| 設定 | 預設值 | 說明 |
 |---|---|---|
-| `ollamaHost` | `http://localhost:11434` | Ollama 地址 |
-| `chatModel` | `qwen2.5:7b` | 聊天 / 架构指令模型 |
-| `coderModel` | `deepseek-coder:6.7b` | 代码生成模型 |
-| `unloadTimeoutMs` | `15000` | 等待上一个模型卸载的最长毫秒数 |
-
-## 需要你装到 DSH 后微调的两个点
-
-参考 `@dsh-pet/pet` 的事件契约，它观察的是 `assistant/*` / `tool/*` 事件；
-user 侧事件名我按对称命名列了候选（`user/message` / `session/user` / …）。
-装到 DSH 后如果消息没被路由：
-
-1. **`src/index.ts` 里的 `USER_EVENT_TYPES`**：在 DSH 启动日志或事件调试器里
-   看一次真实的 user 事件 `type`，把它加进这个 Set。
-2. **`injectAssistantReply(session, text)`**：按候选顺序尝试了
-   `session.reply()` / `session.assistant.say()` / `session.emit('assistant/message')`。
-   如果回复没出现在对话框，`console.log(session)` 看真实形状，改成对应调用即可。
-
-这两处是 DSH 不同 rc 线之间唯一可能漂移的地方；路由和内存卸载逻辑不需要动。
+| `ollamaHost` | `http://localhost:11434` | Ollama 位置 |
+| `chatModel` | `qwen2.5:7b-instruct-q4_K_M` | 對話/出指令的模型 |
+| `coderModel` | `deepseek-coder:6.7b` | 寫代碼的模型 |
